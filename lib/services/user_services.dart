@@ -8,7 +8,9 @@ class MediaService{
 
   }
   saveMedia(Media media)async{
+    print("entered save media file");
     return await _repository.insertData("media", media.mediaMap());
+    
   }
 
   readAllMedia()async{

@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_typing_uninitialized_variables
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -153,15 +155,16 @@ class _HomePageState extends State<HomePage> {
     NotificationApi.init();
     internetconnection = Connectivity()
         .onConnectivityChanged
-        .listen((ConnectivityResult result)async {
+        .listen((ConnectivityResult result) async {
       // whenevery connection status is changed.
       if (result == ConnectivityResult.none) {
         //there is no any connection
         setState(() {
           isoffline = true;
         });
-        if(isoffline == true){
-          await NotificationApi.showNotification(image: "image",body: "no internet");
+        if (isoffline == true) {
+          await NotificationApi.showNotification(
+              image: "image", body: "no internet");
         }
         print("offile");
       } else if (result == ConnectivityResult.mobile) {
@@ -174,19 +177,20 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           isoffline = false;
         });
-                if(isoffline == false){
-          await NotificationApi.showNotification(image: "image",body: "no internet");
+        if (isoffline == false) {
+          await NotificationApi.showNotification(
+              image: "image", body: "no internet");
         }
-
       }
     });
-    
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:  AppBar(title: isoffline == true? Text("check internet"):Text(widget.title)) ,
+      appBar: AppBar(
+          title:
+              isoffline == true ? Text("check internet") : Text(widget.title)),
       body: Form(
         key: _formKey,
         child: Column(
@@ -217,12 +221,12 @@ class _HomePageState extends State<HomePage> {
                                     data: objResult,
                                   )));
 
-                      await NotificationApi.showNotification(
-                          image:
-                              "https://images.pexels.com/photos/1133957/pexels-photo-1133957.jpeg?auto=compress&cs=tinysrgb&w=600",
-                          title: 'The Gallery',
-                          body: "Nice images",
-                          payload: '');
+                      // await NotificationApi.showNotification(
+                      //     image:
+                      //         "https://images.pexels.com/photos/1133957/pexels-photo-1133957.jpeg?auto=compress&cs=tinysrgb&w=600",
+                      //     title: 'The Gallery',
+                      //     body: "Nice images",
+                      //     payload: '');
                     },
                     child: Text('view Data'))
                 : SizedBox()
@@ -425,14 +429,14 @@ class _HomePageState extends State<HomePage> {
                       ),
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                          // uploadToLocalDb(
-                          //     imagePath,
-                          //     mediaType,
-                          //     selectDateContrller.text,
-                          //     selectTimeController.text);
-                          uploadFile();
+                          uploadToLocalDb(
+                              imagePath,
+                              mediaType,
+                              selectDateContrller.text,
+                              selectTimeController.text);
+                          // uploadFile();
+                          print("uploaded to db");
                         }
-                        print("uploaded to db");
 
                         print('Time : $showTime');
                       },
@@ -541,7 +545,8 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       objResult = result;
     });
-    print("result data : $result");
+    print("result : $objResult");
+    _clear();
   }
 
   void _clear() {
