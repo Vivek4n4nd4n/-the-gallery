@@ -2,7 +2,7 @@
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:thegallery/cropper/local/utils.dart';
+import 'package:thegallery/cropper/local_notification/utils.dart';
 
 
 class NotificationApi {

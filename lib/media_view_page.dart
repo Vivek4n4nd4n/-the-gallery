@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_is_empty
+
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:thegallery/cropper/home_page.dart';
+import 'package:thegallery/cropper/local_notification/schedule_notifi.dart';
 import 'package:thegallery/media_model.dart';
 import 'package:thegallery/services/user_services.dart';
 import 'package:thegallery/todo/colors.dart';
@@ -46,6 +49,14 @@ class _MyHomePageState extends State<MyHomePage> {
     print("widget.media: ${widget.data}");
     if (widget.data != null) {
       getAllUserDetails();
+      for (int i = 0; i < _userList.length; i++) {
+        NotificationHelper().scheduledNotification(
+          hour: int.parse(_userList[i].time.toString().split(":")[0]),
+          minutes: int.parse(_userList[i].time.toString().split(":")[1]),
+          id: int.parse(_userList[i].id.toString()),
+          sound: 'sound0',
+        );
+      }
     }
 
     getAllUserDetails();
@@ -109,10 +120,13 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Expanded(
             child: _userList.length == 0
-                ? Center(
-                    child: Text("upload data to view here..!",style: TextStyle(fontSize: 20),),
+                ? const Center(
+                    child: Text(
+                      "upload data to view here..!",
+                      style: TextStyle(fontSize: 20),
+                    ),
                   )
-                : Container(
+                : SizedBox(
                     child: Padding(
                       padding: const EdgeInsets.all(2.0),
                       child: GridView.builder(

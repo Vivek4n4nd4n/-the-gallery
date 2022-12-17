@@ -14,10 +14,11 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:thegallery/cropper/local/notif_l0cal.dart';
+import 'package:thegallery/cropper/local_notification/notif_l0cal.dart';
 
 import 'package:intl/intl.dart';
 import 'package:datetime_picker_formfield_new/datetime_picker_formfield_new.dart';
+import 'package:thegallery/main.dart';
 import 'package:thegallery/media_model.dart';
 import 'package:thegallery/media_view_page.dart';
 import 'package:thegallery/services/user_services.dart';
@@ -25,6 +26,7 @@ import 'package:thegallery/todo/colors.dart';
 import 'package:thegallery/todo/data-list.dart';
 import 'package:thegallery/todo/media_view.dart';
 import 'package:video_player/video_player.dart';
+import 'package:workmanager/workmanager.dart';
 
 class HomePage extends StatefulWidget {
   final String title;
@@ -163,8 +165,12 @@ class _HomePageState extends State<HomePage> {
           isoffline = true;
         });
         if (isoffline == true) {
-          await NotificationApi.showNotification(
-              image: "image", body: "no internet");
+  Workmanager().registerOneOffTask(fetchBackground, fetchBackground,
+      inputData: <String, dynamic>{
+        'network status': "No connection",
+        'Check connection': true,
+      },
+      initialDelay: Duration(seconds: 1));
         }
         print("offile");
       } else if (result == ConnectivityResult.mobile) {
@@ -187,6 +193,14 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+          if (isoffline == true) {
+         NotificationApi.showNotification(
+            title: "Network issue...!",
+            body: "check internet",
+            payload: 'item x',
+            image: 'sd.sc');
+      }
+
     return Scaffold(
       appBar: AppBar(
           title:
@@ -589,7 +603,7 @@ Widget viewdata() {
           builder: (context, snapshot) {
             var size = MediaQuery.of(context).size;
 
-            final double itemHeight = (size.height - kToolbarHeight - 24) / 2;
+            final double itemHeight = (size.height - kToolbarHeight - 24) / 1.8;
             final double itemWidth = size.width / 2;
 
             if (snapshot.hasData) {
