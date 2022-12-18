@@ -12,7 +12,7 @@ class DatabaseConnection{
   }
   Future <void> _createDatabase(Database database, int version)async{
 
-    String sql = "CREATE TABLE media (id INTEGER PRIMARY KEY,mediaType TEXT, mediaUrl TEXT, date TEXT,time TEXT);";
+    String sql = "CREATE TABLE media (id INTEGER PRIMARY KEY,mediaType TEXT, mediaUrl TEXT, date DATE,time TEXT);";
     await database.execute(sql); 
   }
 }

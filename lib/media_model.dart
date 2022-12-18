@@ -7,7 +7,7 @@ class Media {
   String? date;
   String? time;
 
-  mediaMap(){
+mediaMap(){
 var mapping = Map<String,dynamic>();
 mapping['id']= id ;
 mapping ['mediaType'] = mediaType;

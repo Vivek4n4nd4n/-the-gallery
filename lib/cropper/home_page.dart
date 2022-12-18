@@ -39,6 +39,45 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
+Future uploadFile(obj) async {
+  print("entered upload to api");
+  var dio = Dio();
+
+  if (obj["pickedResult"] != null) {
+    FormData data = FormData.fromMap(
+      {
+        "mediaUrl": await MultipartFile.fromFile(
+          obj["imagePath"],
+          filename: obj["fileName"],
+          contentType: MediaType("image", "jpeg"),
+        ),
+        "mediaType": obj["mediaType"],
+      },
+    );
+    var response = await dio.post('https://apiv2.bemeli.com/taskapi/postCreate',
+        data: data, onSendProgress: (int sent, int total) {
+      // setState(() {
+      //   dsent = sent;
+      //   dtotal = total;
+      // });
+
+      print('///$sent,$total');
+    }).whenComplete(() {
+      debugPrint("complete:");
+
+      NotificationApi.showNotification(
+          body: "${obj["mediaType"]} Upload Completed",
+          title: obj["imagePath"]);
+      // _clear();
+    }).catchError((onError) {
+      debugPrint("error:${onError.toString()}");
+    });
+    print('print : ${response.data}');
+  } else {
+    print(' print :Result is null');
+  }
+}
+
 class _HomePageState extends State<HomePage> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   TextEditingController selectDateContrller = TextEditingController();
@@ -114,43 +153,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future uploadFile() async {
-    var dio = Dio();
-
-    if (pickedResult != null) {
-      FormData data = FormData.fromMap(
-        {
-          "mediaUrl": await MultipartFile.fromFile(
-            imagePath,
-            filename: fileName,
-            contentType: MediaType("image", "jpeg"),
-          ),
-          "mediaType": mediaType,
-        },
-      );
-      var response = await dio
-          .post('https://apiv2.bemeli.com/taskapi/postCreate', data: data,
-              onSendProgress: (int sent, int total) {
-        setState(() {
-          dsent = sent;
-          dtotal = total;
-        });
-
-        print('///$sent,$total');
-      }).whenComplete(() {
-        debugPrint("complete:");
-        NotificationApi.showNotification(
-            image: "", body: "$mediaType Upload Completed", title: imagePath);
-        _clear();
-      }).catchError((onError) {
-        debugPrint("error:${onError.toString()}");
-      });
-      print('print : ${response.data}');
-    } else {
-      print(' print :Result is null');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -164,14 +166,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           isoffline = true;
         });
-        if (isoffline == true) {
-  Workmanager().registerOneOffTask(fetchBackground, fetchBackground,
-      inputData: <String, dynamic>{
-        'network status': "No connection",
-        'Check connection': true,
-      },
-      initialDelay: Duration(seconds: 1));
-        }
+
         print("offile");
       } else if (result == ConnectivityResult.mobile) {
         //connection is mobile data network
@@ -184,22 +179,31 @@ class _HomePageState extends State<HomePage> {
           isoffline = false;
         });
         if (isoffline == false) {
-          await NotificationApi.showNotification(
-              image: "image", body: "no internet");
+          await NotificationApi.showNotification(body: "network available");
         }
       }
     });
+    Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: true,
+    );
+
+    Workmanager().registerOneOffTask(
+      "db",
+      "db",
+      initialDelay: const Duration(seconds: 15),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-          if (isoffline == true) {
-         NotificationApi.showNotification(
-            title: "Network issue...!",
-            body: "check internet",
-            payload: 'item x',
-            image: 'sd.sc');
-      }
+    if (isoffline == true) {
+      NotificationApi.showNotification(
+        title: "Network issue...!",
+        body: "check internet",
+        payload: 'item x',
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -316,7 +320,13 @@ class _HomePageState extends State<HomePage> {
                       )
                     : GestureDetector(
                         onTap: () {
-                          uploadFile();
+                          var obj = {
+                            "pickedResult": pickedResult,
+                            "mediaType": mediaType,
+                            "imagePath": imagePath,
+                            "fileName": fileName
+                          };
+                          uploadFile(obj);
                         },
                         child: Icon(Icons.image)),
                 // _image(),
@@ -448,11 +458,32 @@ class _HomePageState extends State<HomePage> {
                               mediaType,
                               selectDateContrller.text,
                               selectTimeController.text);
-                          // uploadFile();
+                          // Workmanager().initialize(
+                          //   callbackDispatcher,
+                          //   isInDebugMode: true,
+                          // );
+
+                          // Workmanager().registerOneOffTask(
+                          //     simplePeriodicTask, simplePeriodicTask,
+                          //     initialDelay: const Duration(seconds: 15),
+                          //     inputData: {
+                          //       "imagePath": imagePath,
+                          //       "fileName": fileName.toString(),
+                          //       "mediaType": mediaType,
+                          //       "pickedResult": pickedResult.toString(),
+
+                          //       //
+                          //     }).then((value) {
+                          //   _clear();
+                          // });
+
+                          //  uploadFile();
                           print("uploaded to db");
                         }
-
-                        print('Time : $showTime');
+                        print(
+                            'date : ${DateTime.parse(selectDateContrller.text).second}');
+                        print(
+                            "time : ${DateTime.parse(selectTimeController.text).second}");
                       },
                       child: const Text('Upload'),
                     )
@@ -563,6 +594,68 @@ class _HomePageState extends State<HomePage> {
     _clear();
   }
 
+  late Future<DataList> futureAlbum;
+
+  Future<List<DataList>> fetchAlbum() async {
+    final response =
+        await http.get(Uri.parse('https://apiv2.bemeli.com/taskapi/getdatas'));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> result =
+          const JsonDecoder().convert(response.body);
+      List<dynamic> data = result["data"];
+
+      return data.reversed.map((e) => DataList.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+  Widget viewdata() {
+    return Padding(
+      padding: const EdgeInsets.all(5.0),
+      child: Container(
+        height: 180,
+        color: Colors.amber,
+        child: FutureBuilder<List<DataList>>(
+            future: fetchAlbum(),
+            builder: (context, snapshot) {
+              var size = MediaQuery.of(context).size;
+
+              final double itemHeight =
+                  (size.height - kToolbarHeight - 24) / 1.8;
+              final double itemWidth = size.width / 2;
+
+              if (snapshot.hasData) {
+                return GridView.builder(
+                  scrollDirection: Axis.horizontal,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      childAspectRatio: itemWidth / itemHeight / 0.4,
+                      crossAxisCount: 1),
+                  itemCount: 16,
+                  // snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () async {
+                        print(snapshot.data![index].id.toString());
+                      },
+                      child: FurnView(
+                          mediaUrl: snapshot.data![index].mediaUrl.toString(),
+                          message: snapshot.data![index].message.toString(),
+                          id: snapshot.data![index].id.toString(),
+                          mediaType: snapshot.data![index].image.toString()),
+                    );
+                  },
+                );
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+              return const Center(child: CircularProgressIndicator());
+            }),
+      ),
+    );
+  }
+
   void _clear() {
     setState(() {
       imagePath = null;
@@ -573,65 +666,4 @@ class _HomePageState extends State<HomePage> {
     });
     print("check data cleared : $imagePath, $dsent, $dtotal,$fileName");
   }
-}
-
-late Future<DataList> futureAlbum;
-
-Future<List<DataList>> fetchAlbum() async {
-  final response =
-      await http.get(Uri.parse('https://apiv2.bemeli.com/taskapi/getdatas'));
-
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> result =
-        const JsonDecoder().convert(response.body);
-    List<dynamic> data = result["data"];
-
-    return data.reversed.map((e) => DataList.fromJson(e)).toList();
-  } else {
-    throw Exception('Failed to load data');
-  }
-}
-
-Widget viewdata() {
-  return Padding(
-    padding: const EdgeInsets.all(5.0),
-    child: Container(
-      height: 180,
-      color: Colors.amber,
-      child: FutureBuilder<List<DataList>>(
-          future: fetchAlbum(),
-          builder: (context, snapshot) {
-            var size = MediaQuery.of(context).size;
-
-            final double itemHeight = (size.height - kToolbarHeight - 24) / 1.8;
-            final double itemWidth = size.width / 2;
-
-            if (snapshot.hasData) {
-              return GridView.builder(
-                scrollDirection: Axis.horizontal,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    childAspectRatio: itemWidth / itemHeight / 0.4,
-                    crossAxisCount: 1),
-                itemCount: 16,
-                // snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () async {
-                      print(snapshot.data![index].id.toString());
-                    },
-                    child: FurnView(
-                        mediaUrl: snapshot.data![index].mediaUrl.toString(),
-                        message: snapshot.data![index].message.toString(),
-                        id: snapshot.data![index].id.toString(),
-                        mediaType: snapshot.data![index].image.toString()),
-                  );
-                },
-              );
-            } else if (snapshot.hasError) {
-              return Text('${snapshot.error}');
-            }
-            return const Center(child: CircularProgressIndicator());
-          }),
-    ),
-  );
 }

@@ -26,7 +26,7 @@ class Repository {
   ///read all record
   readData(table) async {
     var connection = await database;
-    return await connection?.query(table);
+    return await connection?.query("$table", orderBy: "date");
   }
 
   /// read a single record by id

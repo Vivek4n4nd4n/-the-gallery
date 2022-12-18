@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:thegallery/cropper/home_page.dart';
+import 'package:thegallery/cropper/local_notification/notif_l0cal.dart';
 import 'package:thegallery/cropper/local_notification/schedule_notifi.dart';
 import 'package:thegallery/media_model.dart';
 import 'package:thegallery/services/user_services.dart';
@@ -27,6 +28,12 @@ class _MyHomePageState extends State<MyHomePage> {
   late VideoPlayerController _controller;
 
   late Future<void> _video;
+  @override
+  void initState() {
+    super.initState();
+    NotificationApi.init();
+    getAllUserDetails();
+  }
 
   getAllUserDetails() async {
     var users = await _userService.readAllMedia();
@@ -42,26 +49,27 @@ class _MyHomePageState extends State<MyHomePage> {
         _userList.add(userModel);
       });
     });
+    await NotificationApi.showNotification(body: "network noonnn");
   }
 
-  @override
-  void initState() {
-    print("widget.media: ${widget.data}");
-    if (widget.data != null) {
-      getAllUserDetails();
-      for (int i = 0; i < _userList.length; i++) {
-        NotificationHelper().scheduledNotification(
-          hour: int.parse(_userList[i].time.toString().split(":")[0]),
-          minutes: int.parse(_userList[i].time.toString().split(":")[1]),
-          id: int.parse(_userList[i].id.toString()),
-          sound: 'sound0',
-        );
-      }
-    }
+  // @override
+  // void initState() {
+  //   print("widget.media: ${widget.data}");
+  //   if (widget.data != null) {
+  //     getAllUserDetails();
+  //     for (int i = 0; i < _userList.length; i++) {
+  //       NotificationHelper().scheduledNotification(
+  //         hour: int.parse(_userList[i].time.toString().split(":")[0]),
+  //         minutes: int.parse(_userList[i].time.toString().split(":")[1]),
+  //         id: int.parse(_userList[i].id.toString()),
+  //         sound: 'sound0',
+  //       );
+  //     }
+  //   }
 
-    getAllUserDetails();
-    super.initState();
-  }
+  //   getAllUserDetails();
+  //   super.initState();
+  // }
 
   _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -242,89 +250,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
           ),
-          // Container(
-          //   height: 200,
-          //   child: ListView.builder(
-          //       scrollDirection: Axis.horizontal,
-          //       itemCount: _userList.length,
-          //       itemBuilder: (context, index) {
-          //         return Card(
-          //           child: Column(
-          //             children: [
-          //               Container(
-          //                 height: 250,
-          //                 width: 200,
-          //                 child: Column(
-          //                   children: [
-          //                     Padding(
-          //                       padding: const EdgeInsets.only(left: 20),
-          //                       child: Row(
-          //                         children: [
-          //                           Text(
-          //                               'Id : ${_userList[index].id.toString()}'),
-          //                           Text(_userList[index].mediaType ?? ''),
-          //                           IconButton(
-          //                               onPressed: () {
-          //                                 print("iddd:${_userList[index].id} ");
-          //                                 _deleteFormDialog(
-          //                                     context, _userList[index].id);
-          //                               },
-          //                               icon: const Icon(
-          //                                 Icons.delete,
-          //                                 color: Colors.red,
-          //                               ))
-          //                         ],
-          //                       ),
-          //                     ),
-
-          //                     Container(
-          //                       height: 150,
-          //                       width: 130,
-          //                       child: Image.network(
-          //                         _userList[index].mediaUrl ?? '',
-          //                         fit: BoxFit.cover,
-          //                       ),
-          //                     ),
-          //                     // ListTile(
-
-          //                     //   title: Row(
-          //                     //     children: [
-          //                     //       Text(
-          //                     //         _userList[index].mediaUrl ?? '',
-          //                     //         maxLines: 2,
-          //                     //       ),
-          //                     //       SizedBox(
-          //                     //         width: 30,
-          //                     //       ),
-          //                     //       Text('des:click'),
-          //                     //     ],
-          //                     //   ),
-          //                     //   trailing: Row(
-          //                     //     mainAxisSize: MainAxisSize.min,
-          //                     //     children: [
-          //                     //       IconButton(
-          //                     //           onPressed: () {},
-          //                     //           icon: const Icon(
-          //                     //             Icons.edit,
-          //                     //             color: Colors.teal,
-          //                     //           )),
-          //                     //
-          //                     //     ],
-          //                     //   ),
-          //                     // ),
-          //                   ],
-          //                 ),
-          //               ),
-          //               Text(
-          //                 _userList[index].date ?? '',
-          //                 maxLines: 2,
-          //               ),
-          //               Text(_userList[index].time ?? ''),
-          //             ],
-          //           ),
-          //         );
-          //       }),
-          // ),
         ],
       ),
     );
