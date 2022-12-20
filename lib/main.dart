@@ -17,7 +17,7 @@ const rescheduledTaskKey = "be.tramckrijte.workmanagerExample.rescheduledTask";
 const failedTaskKey = "be.tramckrijte.workmanagerExample.failedTask";
 const simpleDelayedTask = "be.tramckrijte.workmanagerExample.simpleDelayedTask";
 const simplePeriodicTask =
-    "be.tramckrijte.workmanagerExample.simplePeriodicTask";
+    "sdfsdf";
 const simplePeriodic1HourTask =
     "be.tramckrijte.workmanagerExample.simplePeriodic1HourTask";
 const noInternet = "noInternet";
@@ -35,7 +35,7 @@ void callbackDispatcher() {
       case noInternet:
         print("$noInternet was executed. inputData = $inputData");
         break;
-      case simplePeriodicTask:
+      case "simplePeriodicTask":
         print("$inputData was exRecuted");
 
         await uploadFile(inputData).then((value) async =>

@@ -26,7 +26,9 @@ class Repository {
   ///read all record
   readData(table) async {
     var connection = await database;
-    return await connection?.query("$table", orderBy: "date");
+    var nextTime = DateTime.now().millisecondsSinceEpoch;
+    return await connection?.rawQuery(
+        "select * from $table where time >$nextTime  order by time asc");
   }
 
   /// read a single record by id

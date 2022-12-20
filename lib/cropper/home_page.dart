@@ -40,7 +40,6 @@ class HomePage extends StatefulWidget {
 }
 
 Future uploadFile(obj) async {
-  print("entered upload to api");
   var dio = Dio();
 
   if (obj["pickedResult"] != null) {
@@ -55,13 +54,13 @@ Future uploadFile(obj) async {
       },
     );
     var response = await dio.post('https://apiv2.bemeli.com/taskapi/postCreate',
-        data: data, onSendProgress: (int sent, int total) {
+        data: data, onSendProgress: (int sent, int total) async {
+      await NotificationApi.showNotification(body: "$sent:$total");
+
       // setState(() {
       //   dsent = sent;
       //   dtotal = total;
       // });
-
-      print('///$sent,$total');
     }).whenComplete(() {
       debugPrint("complete:");
 
@@ -72,10 +71,7 @@ Future uploadFile(obj) async {
     }).catchError((onError) {
       debugPrint("error:${onError.toString()}");
     });
-    print('print : ${response.data}');
-  } else {
-    print(' print :Result is null');
-  }
+  } else {}
 }
 
 class _HomePageState extends State<HomePage> {
@@ -84,7 +80,7 @@ class _HomePageState extends State<HomePage> {
   TextEditingController selectTimeController = TextEditingController();
   DateTime selectedDate = DateTime.now();
   TimeOfDay? showTime;
-  final formate = DateFormat('hh:mm');
+  // final formate = DateFormat('hh:mm');
   int? dtotal;
   int? dsent;
   var objResult;
@@ -98,6 +94,8 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription? internetconnection;
   bool? isoffline;
   late VideoPlayerController _controller;
+  late List<Media> _userList = <Media>[];
+  final _userService = MediaService();
 
   late Future<void> _video;
   File? video;
@@ -126,15 +124,12 @@ class _HomePageState extends State<HomePage> {
         _controller = VideoPlayerController.file(File(video.path));
         _video = _controller.initialize();
       });
-    } on PlatformException catch (e) {
-      print("unable to pick video $e");
-    }
+    } on PlatformException catch (e) {}
   }
 
   pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles();
-      print("result ::: $result");
       File file = File(result!.files.single.path ?? "");
       String filename = file.path.split('/').last;
 
@@ -148,9 +143,7 @@ class _HomePageState extends State<HomePage> {
         fileName = filename;
         mediaType = imagePath.toString().endsWith('mp4') ? 'Video' : 'Image';
       });
-    } catch (e) {
-      print("picked video");
-    }
+    } catch (e) {}
   }
 
   @override
@@ -166,8 +159,6 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           isoffline = true;
         });
-
-        print("offile");
       } else if (result == ConnectivityResult.mobile) {
         //connection is mobile data network
         setState(() {
@@ -188,11 +179,11 @@ class _HomePageState extends State<HomePage> {
       isInDebugMode: true,
     );
 
-    Workmanager().registerOneOffTask(
-      "db",
-      "db",
-      initialDelay: const Duration(seconds: 15),
-    );
+    // Workmanager().registerOneOffTask(
+    //   "db",
+    //   "db",
+    //   initialDelay: const Duration(seconds: 15),
+    // );
   }
 
   @override
@@ -219,19 +210,6 @@ class _HomePageState extends State<HomePage> {
             imagePath == null
                 ? ElevatedButton(
                     onPressed: () async {
-                      uploadToLocalDb(mediaPath, mediaType, date, time) async {
-                        var media = Media();
-                        media.mediaUrl = mediaPath;
-                        media.mediaType = mediaType;
-                        media.date = date;
-                        media.time = time;
-                        var result = await MediaService().saveMedia(media);
-                        setState(() {
-                          objResult = result;
-                        });
-                        print("result data : $result");
-                      }
-
                       Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -454,36 +432,57 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           uploadToLocalDb(
-                              imagePath,
-                              mediaType,
-                              selectDateContrller.text,
-                              selectTimeController.text);
-                          // Workmanager().initialize(
-                          //   callbackDispatcher,
-                          //   isInDebugMode: true,
-                          // );
+                            imagePath.toString(),
+                            mediaType.toString(),
+                            "${selectDateContrller.text.toString()},${selectTimeController.text.toString()}",
+                            dateTimeStringToMilliseconds(
+                                selectDateContrller.text.toString(),
+                                selectTimeController.text.toString()),
+                          );
+                          Workmanager().initialize(
+                            callbackDispatcher,
+                            isInDebugMode: true,
+                          );
+                          var users = await _userService.readAllMedia();
+                          _userList = <Media>[];
+                          users.forEach((user) {
+                            setState(() {
+                              var userModel = Media();
+                              userModel.id = user['id'];
+                              userModel.mediaType =
+                                  user['mediaType'].toString();
+                              userModel.date = user['date'].toString();
+                              userModel.mediaUrl = user['mediaUrl'].toString();
+                              userModel.time = user['time'].toString();
+                              _userList.add(userModel);
+                            });
+                          });
+                          for (var i in _userList){
+                          print("user data ${_userList[0].mediaType}");
+                          var nextTimeStamp =
+                              int.parse(_userList[0].time.toString()) -
+                                  DateTime.now().millisecondsSinceEpoch;
+                          print(
+                              "currentTimeStamp:  ${DateTime.now().millisecondsSinceEpoch}");
+                          print("first index time: ${_userList[0].time}");
+                          print("nextTimeStamp $nextTimeStamp");
+                          Workmanager().registerOneOffTask(
+                              "simplePeriodicTask", "simplePeriodicTask",
+                              initialDelay:
+                                  Duration(milliseconds: nextTimeStamp),
+                              inputData: {
+                                "imagePath": _userList[0].mediaUrl.toString(),
+                                "fileName": _userList[0].mediaType.toString(),
+                                "mediaType": _userList[0].mediaType.toString(),
+                                "pickedResult": _userList[0].id.toString(),
 
-                          // Workmanager().registerOneOffTask(
-                          //     simplePeriodicTask, simplePeriodicTask,
-                          //     initialDelay: const Duration(seconds: 15),
-                          //     inputData: {
-                          //       "imagePath": imagePath,
-                          //       "fileName": fileName.toString(),
-                          //       "mediaType": mediaType,
-                          //       "pickedResult": pickedResult.toString(),
-
-                          //       //
-                          //     }).then((value) {
-                          //   _clear();
-                          // });
-
+                                //
+                              }).then((value) {
+                            // _clear();
+                          });
+                          }
                           //  uploadFile();
-                          print("uploaded to db");
                         }
-                        print(
-                            'date : ${DateTime.parse(selectDateContrller.text).second}');
-                        print(
-                            "time : ${DateTime.parse(selectTimeController.text).second}");
                       },
                       child: const Text('Upload'),
                     )
@@ -502,6 +501,18 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  dateTimeStringToMilliseconds(String dateString, String timeString) {
+    // Create a DateFormat object for parsing the date and time strings
+    final DateFormat inputFormat = DateFormat('dd-MM-yyyy hh:mm a');
+
+    // Parse the date and time strings to create a DateTime object
+    DateTime dateTime = inputFormat.parse('$dateString $timeString');
+
+    // Return the number of milliseconds since the Unix epoch
+    // (1970-01-01 00:00:00 UTC)
+    return dateTime.millisecondsSinceEpoch.toString();
   }
 
   String _displayTimeText(TimeOfDay? time) {
@@ -590,7 +601,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       objResult = result;
     });
-    print("result : $objResult");
     _clear();
   }
 
@@ -636,9 +646,7 @@ class _HomePageState extends State<HomePage> {
                   // snapshot.data!.length,
                   itemBuilder: (context, index) {
                     return GestureDetector(
-                      onTap: () async {
-                        print(snapshot.data![index].id.toString());
-                      },
+                      onTap: () async {},
                       child: FurnView(
                           mediaUrl: snapshot.data![index].mediaUrl.toString(),
                           message: snapshot.data![index].message.toString(),
@@ -664,6 +672,5 @@ class _HomePageState extends State<HomePage> {
       fileName = null;
       selectedDate = DateTime.now();
     });
-    print("check data cleared : $imagePath, $dsent, $dtotal,$fileName");
   }
 }

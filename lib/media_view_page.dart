@@ -33,6 +33,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     NotificationApi.init();
     getAllUserDetails();
+
   }
 
   getAllUserDetails() async {
@@ -42,13 +43,14 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         var userModel = Media();
         userModel.id = user['id'];
-        userModel.mediaType = user['mediaType'];
-        userModel.date = user['date'];
-        userModel.mediaUrl = user['mediaUrl'];
-        userModel.time = user['time'];
+        userModel.mediaType = user['mediaType'].toString();
+        userModel.date = user['date'].toString();
+        userModel.mediaUrl = user['mediaUrl'].toString();
+        userModel.time = user['time'].toString();
         _userList.add(userModel);
       });
     });
+    print("user data ${_userList[0].mediaType}");
     await NotificationApi.showNotification(body: "network noonnn");
   }
 
