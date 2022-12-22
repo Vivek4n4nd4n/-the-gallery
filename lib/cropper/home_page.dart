@@ -457,30 +457,36 @@ class _HomePageState extends State<HomePage> {
                               _userList.add(userModel);
                             });
                           });
-                          for (var i in _userList){
+
                           print("user data ${_userList[0].mediaType}");
                           var nextTimeStamp =
                               int.parse(_userList[0].time.toString()) -
                                   DateTime.now().millisecondsSinceEpoch;
-                          print(
-                              "currentTimeStamp:  ${DateTime.now().millisecondsSinceEpoch}");
-                          print("first index time: ${_userList[0].time}");
-                          print("nextTimeStamp $nextTimeStamp");
-                          Workmanager().registerOneOffTask(
-                              "simplePeriodicTask", "simplePeriodicTask",
-                              initialDelay:
-                                  Duration(milliseconds: nextTimeStamp),
-                              inputData: {
-                                "imagePath": _userList[0].mediaUrl.toString(),
-                                "fileName": _userList[0].mediaType.toString(),
-                                "mediaType": _userList[0].mediaType.toString(),
-                                "pickedResult": _userList[0].id.toString(),
+                          // print(
+                          //     "currentTimeStamp:  ${DateTime.now().millisecondsSinceEpoch}");
+                          // print("first index time: ${_userList[0].time}");
+                          // print("nextTimeStamp $nextTimeStamp");
+                          uploadImgData() async {
+                            Workmanager().registerOneOffTask(
+                                "simplePeriodicTask", "simplePeriodicTask",
+                                initialDelay:
+                                    Duration(milliseconds: nextTimeStamp),
+                                inputData: {
+                                  "imagePath": _userList[0].mediaUrl.toString(),
+                                  "fileName": _userList[0].mediaType.toString(),
+                                  "mediaType":
+                                      _userList[0].mediaType.toString(),
+                                  "pickedResult": _userList[0].id.toString(),
 
-                                //
-                              }).then((value) {
-                            // _clear();
-                          });
+                                  //
+                                }).then((value) {
+                              // _clear();
+                              uploadImgData();
+                            });
                           }
+
+                          uploadImgData();
+
                           //  uploadFile();
                         }
                       },

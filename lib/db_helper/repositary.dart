@@ -28,7 +28,7 @@ class Repository {
     var connection = await database;
     var nextTime = DateTime.now().millisecondsSinceEpoch;
     return await connection?.rawQuery(
-        "select * from $table where time >$nextTime  order by time asc");
+        "select * from $table where time >$nextTime  order by time asc ");
   }
 
   /// read a single record by id
